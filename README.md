@@ -19,7 +19,7 @@ Hard   Val AP: 0.771796729363941
 <br>
 
 ### Test Results:
-<img src="https://github.com/hcl14/retinaface-pytorch-inference/blob/master/test_results/header2017.jpg" width="480" height="190">
+<img src="https://github.com/hcl14/retinaface-pytorch-inference/blob/master/test_images/header2017.jpg" width="480" height="190">
 <img src="https://github.com/hcl14/retinaface-pytorch-inference/blob/master/test_results/header2017.jpg" width="480" height="190">
 
 ### References:
