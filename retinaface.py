@@ -2,9 +2,13 @@ import torch
 import torch.nn.functional as F
 import torch.nn as nn
 from torch.autograd import Variable
-import mxnet as mx
-from mxnet import gluon
 import numpy as np
+
+import os
+import sys
+
+def get_script_path():
+    return os.path.dirname(os.path.realpath(sys.argv[0]))
 
 class RetinaFace_MobileNet(nn.Module):
     def __init__(self):
@@ -389,31 +393,14 @@ class RetinaFace_MobileNet(nn.Module):
         
         return detections
 
-def load_retinaface_mbnet():
+def load_retinaface_mbnet(model_path=None):
     net = RetinaFace_MobileNet()
-    ctx = mx.cpu()
-    sym, arg_params, aux_params = mx.model.load_checkpoint("mnet.25", 0)
-    args = arg_params.keys()
-    auxs = aux_params.keys()
-    weights = []
-
-    layers = sym.get_internals().list_outputs()
-    for layer in layers:
-        for arg in args:
-            if layer == arg:
-                weights.append(arg_params[arg].asnumpy())
-
-        for aux in auxs:
-            if layer == aux:
-                weights.append(aux_params[aux].asnumpy())
-
-    net_dict = net.state_dict()
-    net_layers = list(net_dict.keys())
-    idx = 0
-    for layer in net_layers:
-        if 'num_batches_tracked' not in layer:
-            net_dict[layer] = torch.from_numpy(weights[idx]).float()
-            idx += 1
+    if model_path is None:
+        net_dict = torch.load(os.path.join(get_script_path(),'mnet.25.pth'))
+        print('Default MobileNet weights loaded')
+    else:
+        net_dict = torch.load(model_path)
+        print('Custom MobileNet weights loaded')
     net.load_state_dict(net_dict)
     net.eval()
     return net

@@ -1,7 +1,32 @@
 import numpy as np
-from cython.anchors import anchors_cython
-from cython.cpu_nms import cpu_nms
+#from cython.anchors import anchors_cython
+#from cython.cpu_nms import cpu_nms
 
+
+def anchors_python(height, width, stride,  base_anchors):
+    """
+    Parameters
+    ----------
+    height: height of plane
+    width:  width of plane
+    stride: stride ot the original image
+    anchors_base: (A, 4) a base set of anchors
+    Returns
+    -------
+    all_anchors: (height, width, A, 4) ndarray of anchors spreading over the plane
+    """
+    A = base_anchors.shape[0]
+    all_anchors = np.zeros((height, width, A, 4), dtype=np.float32)
+    for iw in range(width):
+        sw = iw * stride
+        for ih in range(height):
+            sh = ih * stride
+            for k in range(A):
+                all_anchors[ih, iw, k, 0] = base_anchors[k, 0] + sw
+                all_anchors[ih, iw, k, 1] = base_anchors[k, 1] + sh
+                all_anchors[ih, iw, k, 2] = base_anchors[k, 2] + sw
+                all_anchors[ih, iw, k, 3] = base_anchors[k, 3] + sh
+    return all_anchors
 
 def py_nms_wrapper(thresh):
     def _nms(dets):
@@ -9,15 +34,20 @@ def py_nms_wrapper(thresh):
     return _nms
 
 def cpu_nms_wrapper(thresh):
+    '''
     def _nms(dets):
         return cpu_nms(dets, thresh)
     if cpu_nms is not None:
         return _nms
     else:
         return py_nms_wrapper(thresh)
+    '''
+    return py_nms_wrapper(thresh)
 
 def anchors_plane(feat_h, feat_w, stride, base_anchor):
-    return anchors_cython(feat_h, feat_w, stride, base_anchor)
+    #return anchors_cython(feat_h, feat_w, stride, base_anchor)
+    return anchors_python(feat_h, feat_w, stride, base_anchor)
+
 
 def generate_anchors(base_size=16, ratios=[0.5, 1, 2],
                      scales=2 ** np.arange(3, 6), stride=16, dense_anchor=False):

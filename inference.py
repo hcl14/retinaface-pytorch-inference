@@ -2,7 +2,25 @@ import os
 import cv2
 from detector import Retinaface_Detector
 
+'''
+# default parameters ()
+params = {'mobnet_weights_file':'./mnet.25.pth',
+          'threshold': 0.8,
+          'pixel_means': [0,0,0],
+          'pixel_stds': [1.0,1.0,1.0],
+          'pixel_scale': 1.0,
+          'target_size': 1024, # size to resize smaller dimension of input piture
+          'max_size': 1980 # size to further resize bigger dimension it its too big
+    }
+
+detector = Retinaface_Detector(params)
+'''
+
+
 detector = Retinaface_Detector()
+# can be used to update some params on runtime, even model can be reloaded, if different file is provided
+# detector.set_params(params)
+
 test_images = os.listdir('./test_images')
 
 for image in test_images:
@@ -10,7 +28,7 @@ for image in test_images:
     print (imgpath)
 
     img = cv2.imread(imgpath)
-    results = detector.detect(img)
+    results = detector.detect(img, threshold=None) # if None, default threshold from params is used
 
     print (len(results), ' faces found.')
 

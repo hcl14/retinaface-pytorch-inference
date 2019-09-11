@@ -7,17 +7,29 @@ from retinaface import load_retinaface_mbnet
 from utils import RetinaFace_Utils
 
 class Retinaface_Detector(object):
-    def __init__(self):
-        self.threshold = 0.8
-        self.model = load_retinaface_mbnet()
-        self.pixel_means = np.array([0.0, 0.0, 0.0], dtype=np.float32)
-        self.pixel_stds = np.array([1.0, 1.0, 1.0], dtype=np.float32)
-        self.pixel_scale = float(1.0)
+    def __init__(self, params={}):
+        # load model first time, overload only if another file was provided
+        self.model = load_retinaface_mbnet(params.get('mobnet_weights_file', None))
+        self.model_path = params.get('mobnet_weights_file', None)
         self.utils = RetinaFace_Utils()
+        self.set_params(params)
+
+    def set_params(self, params={}):
+        self.threshold = params.get("threshold", 0.8)
+        self.pixel_means = np.array(params.get("pixel_means", [0,0,0]), dtype=np.float32)
+        self.pixel_stds = np.array(params.get("pixel_stds", [1.0,1.0,1.0]), dtype=np.float32)
+        self.pixel_scale = float(params.get("pixel_scale", 1.0))
+        self.target_size = params.get("target_size", 1024)
+        self.max_size = params.get("max_size", 1980)
+        # reload model
+        if params.get('mobnet_weights_file', None) is not None:
+            if params.get('mobnet_weights_file') != self.model_path:
+                self.model = load_retinaface_mbnet(params.get('mobnet_weights_file'))
+                self.model_path = params.get('mobnet_weights_file')
 
     def img_process(self, img):
-        target_size = 1024
-        max_size = 1980
+        target_size = self.target_size
+        max_size = self.max_size
         im_shape = img.shape
         im_size_min = np.min(im_shape[0:2])
         im_size_max = np.max(im_shape[0:2])
@@ -33,13 +45,17 @@ class Retinaface_Detector(object):
                                     self.pixel_stds[2 - i]
         return im_tensor, im_scale
 
-    def detect(self, img):
+    def detect(self, img, threshold=None):
         results = []
         im, im_scale = self.img_process(img)
         im = torch.from_numpy(im)
         im_tensor = Variable(im)
         output = self.model(im_tensor)
-        faces, landmarks = self.utils.detect(im, output, self.threshold, im_scale)
+        if threshold is not None:
+            thrs = threshold
+        else:
+            thrs = self.threshold
+        faces, landmarks = self.utils.detect(im, output, thrs, im_scale)
         
         if faces is None or landmarks is None:
             return results
